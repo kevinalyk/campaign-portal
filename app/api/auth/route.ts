@@ -34,25 +34,22 @@ export async function POST(request: NextRequest) {
   const body = await request.json()
   const { action, email, password, firstName, lastName, termsAccepted } = body
 
-  console.log(`Auth request: action=${action}, email=${email}`)
-
   // Only apply rate limiting for login attempts
   if (action === "login") {
     const ip = request.ip || "127.0.0.1"
     // Use both IP and email for more precise rate limiting
     const identifier = `${ip}:${email}`
-    console.log(`Applying rate limit for: ${identifier}`)
 
-    const rateLimitResult = await applyLoginRateLimit(identifier)
+    // Apply rate limiting - 5 attempts per minute
+    const rateLimitResult = applyLoginRateLimit(identifier, 5, 60 * 1000)
 
     if (!rateLimitResult.success) {
-      console.log(`Rate limit exceeded for ${identifier}`)
       return NextResponse.json(
         { message: "Too many login attempts. Please try again later." },
         {
           status: 429,
           headers: {
-            "Retry-After": Math.ceil((rateLimitResult.reset || 0 - Date.now()) / 1000).toString(),
+            "Retry-After": Math.ceil((rateLimitResult.reset - Date.now()) / 1000).toString(),
           },
         },
       )
@@ -139,7 +136,6 @@ export async function POST(request: NextRequest) {
 
         return response
       } else {
-        console.log(`Failed login attempt for email: ${email}`)
         return NextResponse.json({ message: "Invalid credentials" }, { status: 401 })
       }
     } else if (action === "register") {
@@ -189,7 +185,6 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ message: "Invalid action" }, { status: 400 })
     }
   } catch (error) {
-    console.error("Auth error:", error)
     return NextResponse.json({ message: "Internal server error", error: error.message }, { status: 500 })
   }
 }

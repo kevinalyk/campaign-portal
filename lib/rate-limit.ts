@@ -1,52 +1,71 @@
-import { Redis } from "@upstash/redis"
-import { Ratelimit } from "@upstash/ratelimit"
+// Simple in-memory rate limiting implementation
+// This doesn't persist across server restarts but provides basic protection
+// without external dependencies
 
-// Create a Redis client using environment variables
-let redis: Redis | null = null
-let loginRateLimit: Ratelimit | null = null
-
-// Initialize Redis client only once
-try {
-  // Use the REST API URL and token for Upstash
-  redis = new Redis({
-    url: process.env.REDIS_KV_REST_API_URL || "",
-    token: process.env.REDIS_KV_REST_API_TOKEN || "",
-  })
-
-  // Create a rate limiter that allows 5 requests per minute
-  loginRateLimit = new Ratelimit({
-    redis,
-    limiter: Ratelimit.fixedWindow(5, "1 m"),
-    analytics: false, // Disable analytics for better performance
-    prefix: "ratelimit:login", // Use a prefix to avoid key collisions
-  })
-
-  console.log("Redis client and rate limiter initialized successfully")
-} catch (error) {
-  console.error("Failed to initialize Redis client:", error)
+interface RateLimitRecord {
+  count: number
+  timestamp: number
 }
 
-// Helper function to safely apply rate limiting
-export async function applyLoginRateLimit(identifier: string): Promise<{
+// Store rate limit records in memory
+const loginAttempts = new Map<string, RateLimitRecord>()
+
+// Clean up old records periodically (every 5 minutes)
+setInterval(
+  () => {
+    const now = Date.now()
+    const windowMs = 60 * 1000 // 1 minute window
+
+    for (const [key, record] of loginAttempts.entries()) {
+      if (now - record.timestamp > windowMs) {
+        loginAttempts.delete(key)
+      }
+    }
+  },
+  5 * 60 * 1000,
+)
+
+/**
+ * Apply rate limiting for login attempts
+ * @param identifier Unique identifier for the request (e.g., IP + email)
+ * @param limit Maximum number of attempts allowed in the time window
+ * @param windowMs Time window in milliseconds
+ * @returns Object indicating if the request should be allowed
+ */
+export function applyLoginRateLimit(
+  identifier: string,
+  limit = 5,
+  windowMs: number = 60 * 1000,
+): {
   success: boolean
-  limit?: number
-  remaining?: number
-  reset?: number
-}> {
-  // If rate limiter is not initialized, allow the request
-  if (!loginRateLimit) {
-    console.log("Rate limiter not initialized, allowing request")
-    return { success: true }
+  remaining: number
+  reset: number
+} {
+  const now = Date.now()
+
+  // Get or create record
+  const record = loginAttempts.get(identifier) || { count: 0, timestamp: now }
+
+  // Reset if outside window
+  if (now - record.timestamp > windowMs) {
+    record.count = 0
+    record.timestamp = now
   }
 
-  try {
-    // Apply rate limiting
-    const result = await loginRateLimit.limit(identifier)
-    console.log(`Rate limit for ${identifier}: ${result.remaining}/${result.limit} remaining`)
-    return result
-  } catch (error) {
-    // If rate limiting fails, log the error and allow the request
-    console.error("Rate limiting error:", error)
-    return { success: true }
+  // Increment count
+  record.count++
+
+  // Store updated record
+  loginAttempts.set(identifier, record)
+
+  // Calculate remaining attempts and reset time
+  const remaining = Math.max(0, limit - record.count)
+  const reset = record.timestamp + windowMs
+
+  // Return result
+  return {
+    success: record.count <= limit,
+    remaining,
+    reset,
   }
 }

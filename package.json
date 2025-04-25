@@ -69,7 +69,6 @@
     "@auth/core": "latest",
     "nodemailer": "latest",
     "google-auth-library": "latest",
-    "@upstash/redis": "latest",
     "mongodb": "latest",
     "pdf-parse": "latest",
     "mammoth": "latest",
@@ -91,8 +90,7 @@
     "@ai-sdk/openai": "latest",
     "bcryptjs": "latest",
     "google-spreadsheet": "latest",
-    "jose": "latest",
-    "@upstash/ratelimit": "latest"
+    "jose": "latest"
   },
   "devDependencies": {
     "@types/node": "^22",
