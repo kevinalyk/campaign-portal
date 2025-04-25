@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Direct Script Test</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+    .debug-panel {
+      background-color: #f5f5f5;
+      border: 1px solid #ddd;
+      padding: 15px;
+      margin-top: 20px;
+      border-radius: 5px;
+    }
+    #debug-log {
+      background-color: #000;
+      color: #fff;
+      padding: 10px;
+      border-radius: 5px;
+      height: 200px;
+      overflow-y: auto;
+      font-family: monospace;
+      margin-top: 10px;
+    }
+    .log-entry {
+      margin-bottom: 5px;
+      border-bottom: 1px solid #333;
+      padding-bottom: 5px;
+    }
+    .error {
+      color: #ff6b6b;
+    }
+    .warning {
+      color: #feca57;
+    }
+    .info {
+      color: #54a0ff;
+    }
+  </style>
+</head>
+<body>
+  <h1>Direct Script Test</h1>
+  <p>This page tests loading the script.js file directly.</p>
+  
+  <div class="debug-panel">
+    <h2>Debug Panel</h2>
+    <button id="load-button">Load Script Directly</button>
+    <div>
+      <label><input type="checkbox" id="debug-mode" checked> Enable Debug Logging</label>
+    </div>
+    <div id="debug-log"></div>
+  </div>
+  
+  <script>
+    // Debug logging
+    const debugLog = document.getElementById('debug-log');
+    const originalConsoleLog = console.log;
+    const originalConsoleError = console.error;
+    const originalConsoleWarn = console.warn;
+    
+    if (document.getElementById('debug-mode').checked) {
+      console.log = function() {
+        originalConsoleLog.apply(console, arguments);
+        const entry = document.createElement('div');
+        entry.className = 'log-entry info';
+        entry.textContent = Array.from(arguments).join(' ');
+        debugLog.appendChild(entry);
+        debugLog.scrollTop = debugLog.scrollHeight;
+      };
+      
+      console.error = function() {
+        originalConsoleError.apply(console, arguments);
+        const entry = document.createElement('div');
+        entry.className = 'log-entry error';
+        entry.textContent = 'ERROR: ' + Array.from(arguments).join(' ');
+        debugLog.appendChild(entry);
+        debugLog.scrollTop = debugLog.scrollHeight;
+      };
+      
+      console.warn = function() {
+        originalConsoleWarn.apply(console, arguments);
+        const entry = document.createElement('div');
+        entry.className = 'log-entry warning';
+        entry.textContent = 'WARNING: ' + Array.from(arguments).join(' ');
+        debugLog.appendChild(entry);
+        debugLog.scrollTop = debugLog.scrollHeight;
+      };
+    }
+    
+    // Global error handler
+    window.addEventListener('error', function(event) {
+      console.error('Script error:', event.error);
+    });
+    
+    // Create container for the chatbot
+    const container = document.createElement('div');
+    container.id = 'campaign-chatbot-container';
+    document.body.appendChild(container);
+    
+    // Load button handler
+    document.getElementById('load-button').addEventListener('click', function() {
+      console.log('Testing direct script loading');
+      
+      // Remove any existing script
+      const existingScript = document.getElementById('chatbot-script');
+      if (existingScript) {
+        existingScript.remove();
+        console.log('Removed existing script');
+      }
+      
+      // Create and add the script
+      const script = document.createElement('script');
+      script.id = 'chatbot-script';
+      // Use the new path
+      script.src = 'https://v0-vercel-ai-capabilities-gold.vercel.app/api/embed-script';
+      script.onerror = function(error) {
+        console.error('Failed to load the script directly', error);
+      };
+      script.onload = function() {
+        console.log('Script loaded successfully');
+        if (window.CampaignChatbot) {
+          console.log('CampaignChatbot object found, initializing');
+          window.CampaignChatbot.init({
+            campaignId: '67c634af8cbac385ac2be0e3',
+            chatColor: '#FF0000',
+            donationUrl: 'https://example.com/donate'
+          });
+        } else {
+          console.error('CampaignChatbot object not found on window');
+        }
+      };
+      document.head.appendChild(script);
+      console.log('Added script to page');
+    });
+    
+    console.log('Test page initialized');
+  </script>
+</body>
+</html>

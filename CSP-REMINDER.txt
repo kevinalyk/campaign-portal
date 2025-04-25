@@ -1,0 +1,41 @@
+CONTENT SECURITY POLICY (CSP) REMINDER
+======================================
+
+Current Status: REPORT-ONLY MODE
+This means CSP violations are only being logged to the console, not enforced.
+
+TO SWITCH TO ENFORCEMENT MODE:
+------------------------------
+
+1. In next.config.mjs, find all instances of:
+   key: 'Content-Security-Policy-Report-Only'
+
+2. Change them to:
+   key: 'Content-Security-Policy'
+
+3. Make sure you've addressed all CSP violations that appeared in your browser console
+   during testing. Common domains you might need to add:
+   
+   - Google services: https://*.googleapis.com https://*.gstatic.com
+   - AWS services: https://*.amazonaws.com
+   - Analytics: https://*.google-analytics.com https://*.googletagmanager.com
+   - Any other third-party services your app uses
+
+4. Deploy the changes
+
+5. Test thoroughly to ensure nothing breaks
+
+BENEFITS OF ENFORCEMENT MODE:
+----------------------------
+- Prevents XSS attacks by restricting which resources can load
+- Reduces the impact of any compromised dependencies
+- Improves your security posture and compliance
+
+WHEN TO MAKE THIS CHANGE:
+------------------------
+- After thorough testing in report-only mode
+- When you're confident all legitimate resources are allowed
+- Before going live with sensitive user data
+
+For more information on CSP:
+https://developer.mozilla.org/en-US/docs/Web/HTTP/CSP

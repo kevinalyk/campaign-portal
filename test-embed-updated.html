@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Campaign Portal Chatbot Test</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 20px;
+      line-height: 1.6;
+    }
+    
+    h1 {
+      color: #333;
+      border-bottom: 1px solid #eee;
+      padding-bottom: 10px;
+    }
+    
+    .container {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 30px;
+      margin-top: 30px;
+    }
+    
+    .embed-section {
+      flex: 1;
+      min-width: 300px;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      padding: 20px;
+      background-color: #f9f9f9;
+    }
+    
+    h2 {
+      margin-top: 0;
+      color: #e63946;
+    }
+    
+    .chatbot-container {
+      margin-top: 20px;
+      border: 1px dashed #ccc;
+      padding: 10px;
+      background-color: white;
+      min-height: 600px;
+      display: flex;
+      justify-content: center;
+    }
+    
+    .code-block {
+      background-color: #f1f1f1;
+      padding: 15px;
+      border-radius: 5px;
+      font-family: monospace;
+      white-space: pre-wrap;
+      margin-bottom: 20px;
+      overflow-x: auto;
+    }
+    
+    .instructions {
+      margin-bottom: 20px;
+      padding: 15px;
+      background-color: #e6f7ff;
+      border-left: 4px solid #1890ff;
+      border-radius: 0 4px 4px 0;
+    }
+    
+    /* Make sure iframe is responsive */
+    iframe {
+      max-width: 100%;
+    }
+  </style>
+</head>
+<body>
+  <h1>Campaign Portal Chatbot Test Page</h1>
+  
+  <div class="instructions">
+    <p><strong>Instructions:</strong> This page allows you to test both embedding methods for your Campaign Portal chatbot. Replace the campaign ID in both sections with your actual campaign ID.</p>
+    <p>Current campaign ID: <code>67c796fa5be54c590a823566</code> (update this if needed)</p>
+  </div>
+  
+  <div class="container">
+    <!-- Script Embed Method -->
+    <div class="embed-section">
+      <h2>Script Embed Method</h2>
+      <p>This method uses a script tag and a div with a data attribute:</p>
+      
+      <div class="code-block">
+&lt;script src="https://www.campaignportal.ai/api/embed-script"&gt;&lt;/script&gt;
+&lt;div id="campaign-chatbot" data-campaign-id="67c796fa5be54c590a823566"&gt;&lt;/div&gt;
+      </div>
+      
+      <div class="chatbot-container">
+        <!-- Script embed will be loaded here -->
+        <script src="https://www.campaignportal.ai/api/embed-script"></script>
+        <div id="campaign-chatbot" data-campaign-id="67c796fa5be54c590a823566"></div>
+      </div>
+    </div>
+    
+    <!-- iFrame Embed Method -->
+    <div class="embed-section">
+      <h2>iFrame Embed Method</h2>
+      <p>This method uses an iframe to embed the chatbot:</p>
+      
+      <div class="code-block">
+&lt;iframe 
+  src="https://www.campaignportal.ai/embed/chatbot?campaignId=67c796fa5be54c590a823566" 
+  width="100%" 
+  height="600px" 
+  style="border: none; max-width: 400px;" 
+  allow="clipboard-write"
+&gt;&lt;/iframe&gt;
+      </div>
+      
+      <div class="chatbot-container">
+        <!-- iFrame embed - FIXED URL to use campaignId parameter -->
+        <iframe 
+          src="https://www.campaignportal.ai/embed/chatbot?campaignId=67c796fa5be54c590a823566" 
+          width="100%" 
+          height="600px" 
+          style="border: none; max-width: 400px;" 
+          allow="clipboard-write"
+        ></iframe>
+      </div>
+    </div>
+  </div>
+  
+  <div class="instructions" style="margin-top: 30px;">
+    <p><strong>Troubleshooting:</strong></p>
+    <ul>
+      <li>If the chatbots don't appear, check that your campaign ID is correct</li>
+      <li>Ensure your campaign is active in the Campaign Portal dashboard</li>
+      <li>Check browser console for any errors</li>
+      <li>Verify that your domain allows embedding (CSP settings)</li>
+    </ul>
+  </div>
+</body>
+</html>
