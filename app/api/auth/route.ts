@@ -3,7 +3,7 @@ import { MongoClient } from "mongodb"
 import bcrypt from "bcryptjs"
 import { createJWT } from "@/lib/auth"
 import { initializeSuperAdmin } from "@/scripts/init-super-admin"
-import { applyLoginRateLimit } from "@/lib/rate-limit"
+import { applyLoginRateLimit, applyRegistrationRateLimit } from "@/lib/rate-limit"
 
 if (!process.env.MONGODB_URI) {
   throw new Error('Invalid/Missing environment variable: "MONGODB_URI"')
@@ -34,10 +34,11 @@ export async function POST(request: NextRequest) {
   const body = await request.json()
   const { action, email, password, firstName, lastName, termsAccepted } = body
 
-  // Only apply rate limiting for login attempts
+  const ip = request.ip || "127.0.0.1"
+
+  // Apply rate limiting based on the action
   if (action === "login") {
-    const ip = request.ip || "127.0.0.1"
-    // Use both IP and email for more precise rate limiting
+    // Use both IP and email for more precise rate limiting for login
     const identifier = `${ip}:${email}`
 
     // Apply rate limiting - 5 attempts per minute
@@ -46,6 +47,24 @@ export async function POST(request: NextRequest) {
     if (!rateLimitResult.success) {
       return NextResponse.json(
         { message: "Too many login attempts. Please try again later." },
+        {
+          status: 429,
+          headers: {
+            "Retry-After": Math.ceil((rateLimitResult.reset - Date.now()) / 1000).toString(),
+          },
+        },
+      )
+    }
+  } else if (action === "register") {
+    // For registration, just use IP to prevent creating multiple accounts
+    const identifier = ip
+
+    // Apply rate limiting - 3 registrations per hour
+    const rateLimitResult = applyRegistrationRateLimit(identifier, 3, 60 * 60 * 1000)
+
+    if (!rateLimitResult.success) {
+      return NextResponse.json(
+        { message: "Too many account creation attempts. Please try again later." },
         {
           status: 429,
           headers: {
