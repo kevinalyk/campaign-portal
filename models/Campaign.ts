@@ -41,6 +41,7 @@ export interface Campaign {
   enableDropShadow?: boolean // New field for enabling drop shadow on logo
   headerTextColor?: string // New field for header text color
   actionButtons?: ActionButton[] // New field for action buttons
+  chatRateLimitEnabled?: boolean // New field for chat rate limiting
   isActive: boolean
   createdAt: Date
   updatedAt: Date
@@ -66,6 +67,7 @@ export interface CampaignInput {
   enableDropShadow?: boolean // New field for enabling drop shadow on logo
   headerTextColor?: string // New field for header text color
   actionButtons?: ActionButton[] // New field for action buttons
+  chatRateLimitEnabled?: boolean // New field for chat rate limiting
   isActive?: boolean
 }
 
@@ -124,6 +126,7 @@ const CampaignSchema = new mongoose.Schema(
         },
       ],
     },
+    chatRateLimitEnabled: { type: Boolean, default: true }, // Default to enabled
     isActive: { type: Boolean, default: true },
   },
   {

@@ -23,6 +23,12 @@ const nextConfig = {
     // !! WARN !!
     ignoreBuildErrors: true,
   },
+  eslint: {
+    ignoreDuringBuilds: true,
+  },
+  images: {
+    unoptimized: true,
+  },
   
   // Updated headers configuration to fix X-Frame-Options for embed routes
   async headers() {

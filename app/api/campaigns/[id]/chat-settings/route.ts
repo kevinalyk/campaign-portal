@@ -73,6 +73,7 @@ export async function PATCH(request: NextRequest, { params }: { params: { id: st
     if (body.enableDropShadow !== undefined) updateData.enableDropShadow = body.enableDropShadow
     if (body.headerTextColor !== undefined) updateData.headerTextColor = body.headerTextColor
     if (body.actionButtons !== undefined) updateData.actionButtons = body.actionButtons
+    if (body.chatRateLimitEnabled !== undefined) updateData.chatRateLimitEnabled = body.chatRateLimitEnabled
 
     console.log("UPDATE DATA KEYS:", Object.keys(updateData))
 
@@ -144,6 +145,7 @@ export async function PATCH(request: NextRequest, { params }: { params: { id: st
         enableDropShadow: updatedCampaign.enableDropShadow,
         headerTextColor: updatedCampaign.headerTextColor,
         actionButtons: updatedCampaign.actionButtons,
+        chatRateLimitEnabled: updatedCampaign.chatRateLimitEnabled,
       },
     })
   } catch (error) {

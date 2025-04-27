@@ -30,6 +30,14 @@ export default function AdminDashboard() {
   const [cacheData, setCacheData] = useState<any>(null)
   const [cacheUrl, setCacheUrl] = useState<string>("")
   const [isLoadingCache, setIsLoadingCache] = useState(false)
+  // Add these state variables at the top of the component with the other state variables
+  const [isRateLimitMigrationRunning, setIsRateLimitMigrationRunning] = useState(false)
+  const [rateLimitMigrationStatus, setRateLimitMigrationStatus] = useState<{
+    status?: string
+    lastRun?: string
+    results?: any
+    error?: string
+  } | null>(null)
 
   // Function to fetch the current status
   const fetchStatus = async () => {
@@ -212,6 +220,66 @@ export default function AdminDashboard() {
     return date.toLocaleString()
   }
 
+  // Add this function to handle the migration button click
+  const handleAddRateLimitField = async () => {
+    setIsRateLimitMigrationRunning(true)
+
+    try {
+      const token = localStorage.getItem("token")
+      if (!token) {
+        throw new Error("No authentication token found")
+      }
+
+      const response = await fetch("/api/admin/add-rate-limit-field", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      })
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        throw new Error(data.error || "Failed to run migration")
+      }
+
+      setRateLimitMigrationStatus(data)
+
+      // Start polling for status updates
+      const interval = setInterval(async () => {
+        try {
+          const statusResponse = await fetch("/api/admin/add-rate-limit-field", {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          })
+
+          const statusData = await statusResponse.json()
+
+          setRateLimitMigrationStatus(statusData)
+
+          // If the migration is no longer running, stop polling
+          if (statusData.status !== "running") {
+            clearInterval(interval)
+            setIsRateLimitMigrationRunning(false)
+          }
+        } catch (error) {
+          console.error("Error checking migration status:", error)
+        }
+      }, 2000) // Poll every 2 seconds
+
+      // Clean up interval if component unmounts
+      return () => clearInterval(interval)
+    } catch (error) {
+      console.error("Error running migration:", error)
+      setRateLimitMigrationStatus({
+        status: "error",
+        error: error.message || "An error occurred while running migration",
+      })
+      setIsRateLimitMigrationRunning(false)
+    }
+  }
+
   return (
     <div className="container mx-auto py-10">
       <h1 className="text-2xl font-bold mb-6">Admin Dashboard</h1>
@@ -246,6 +314,84 @@ export default function AdminDashboard() {
             </CardContent>
           </Card>
         </Link>
+        {/* Add this new Card to the grid div that contains the User Management and Organization Management cards */}
+        <Card className="h-full cursor-pointer hover:shadow-md transition-shadow">
+          <CardHeader>
+            <CardTitle className="flex items-center">
+              <Database className="mr-2 h-5 w-5" />
+              Add Rate Limit Field
+            </CardTitle>
+            <CardDescription>Add chatRateLimitEnabled field to all campaigns</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <p className="mb-4">
+              This will add the new chatRateLimitEnabled field to all existing campaigns that don't have it yet.
+            </p>
+            <Button
+              onClick={handleAddRateLimitField}
+              className="w-full bg-blue-600 hover:bg-blue-700"
+              disabled={isRateLimitMigrationRunning}
+            >
+              {isRateLimitMigrationRunning ? (
+                <>
+                  <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
+                  Running Migration...
+                </>
+              ) : (
+                "Run Migration"
+              )}
+            </Button>
+
+            {rateLimitMigrationStatus && (
+              <div className="border rounded-md p-4 mt-4">
+                <h3 className="font-medium mb-2 flex items-center">
+                  {rateLimitMigrationStatus.status === "running" && (
+                    <RefreshCw className="mr-2 h-4 w-4 animate-spin text-blue-500" />
+                  )}
+                  {rateLimitMigrationStatus.status === "completed" && !rateLimitMigrationStatus.error && (
+                    <CheckCircle className="mr-2 h-4 w-4 text-green-500" />
+                  )}
+                  {rateLimitMigrationStatus.error && <AlertCircle className="mr-2 h-4 w-4 text-red-500" />}
+                  Migration Status: {rateLimitMigrationStatus.status === "running" ? "Running" : "Completed"}
+                </h3>
+
+                {rateLimitMigrationStatus.lastRun && (
+                  <p className="text-sm text-gray-500 mb-2">Last run: {formatDate(rateLimitMigrationStatus.lastRun)}</p>
+                )}
+
+                {rateLimitMigrationStatus.error && (
+                  <div className="bg-red-50 text-red-700 p-3 rounded-md text-sm mb-2">
+                    Error: {rateLimitMigrationStatus.error}
+                  </div>
+                )}
+
+                {rateLimitMigrationStatus.results && (
+                  <div className="mt-4">
+                    <h4 className="font-medium mb-2">Results:</h4>
+                    <div className="grid grid-cols-2 gap-2 mb-4">
+                      <div className="bg-gray-100 p-3 rounded-md text-center">
+                        <div className="text-lg font-bold">{rateLimitMigrationStatus.results.total}</div>
+                        <div className="text-xs text-gray-500">Total Campaigns</div>
+                      </div>
+                      <div className="bg-green-50 p-3 rounded-md text-center">
+                        <div className="text-lg font-bold text-green-700">
+                          {rateLimitMigrationStatus.results.updated}
+                        </div>
+                        <div className="text-xs text-gray-500">Updated</div>
+                      </div>
+                    </div>
+
+                    {rateLimitMigrationStatus.results.message && (
+                      <div className="text-sm bg-blue-50 p-3 rounded-md">
+                        {rateLimitMigrationStatus.results.message}
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
+          </CardContent>
+        </Card>
       </div>
 
       {/* Cache Lookup Tool */}
